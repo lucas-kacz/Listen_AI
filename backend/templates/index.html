@@ -13,5 +13,12 @@
         {{form.file()}}
         {{form.submit()}}
     </form>
+
+    {% if file_info %}
+        <h2>File Information:</h2>
+        </br>
+        <p>File has been uploaded. Path: {{ file_info.file_path }}, Result Text: {{ file_info.result_text }}</p>
+    {% endif %}
+
 </body>
 </html>

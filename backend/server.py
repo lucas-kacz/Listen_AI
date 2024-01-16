@@ -59,19 +59,17 @@ def home():
         # options = whisper.DecodingOptions(fp16=False)
         # result = whisper.decode(model, mel, options)
 
-        print("Audio duration:", duration)
+        # print("Audio duration:", duration)
 
         coupures = []
 
-        for i in range(int(duration / 144) + 1):
+        for i in range(int(duration / 121) + 1):
             coupures.append(
-                [max(i*144 - 5, 0), min((i+1) * 144, int(duration))])
+                [max(i*121 - 5, 0), min((i+1) * 121, int(duration))])
 
-        print("Coupures:", coupures)
+        # print("Coupures:", coupures)
 
         all_text = ""
-
-        print("Audio:", audio)
 
         for i in range(len(coupures)):
             # print("Coupure:", coupures[i])
@@ -91,7 +89,7 @@ def home():
             options = whisper.DecodingOptions(fp16=False)
             result = whisper.decode(model, mel, options)
 
-            print(f"{i/len(coupures):.2f}% : {result.text}")
+            print(f"{100*i/len(coupures):.2f}% : {result.text}")
 
             all_text += result.text
 

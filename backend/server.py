@@ -21,12 +21,6 @@ app.config['UPLOAD_FOLDER'] = 'static/files'
 
 model = whisper.load_model("base")
 
-audio = whisper.load_audio("./Audio/7f1c3d84-db93-430d-be85-1fa0ce726c0e.mp3")
-audio = whisper.pad_or_trim(audio)
-duration = len(audio) / 1000
-
-mel = whisper.log_mel_spectrogram(audio).to(model.device)
-
 nltk.download('punkt')
 
 
@@ -54,22 +48,58 @@ def home():
         file.save(file_path)  # Then we save the file
 
         audio = whisper.load_audio(file_path)
-        audio = whisper.pad_or_trim(audio)
+        # audio = whisper.pad_or_trim(audio)
         duration = len(audio) / 1000
 
-        mel = whisper.log_mel_spectrogram(audio).to(model.device)
+        # mel = whisper.log_mel_spectrogram(audio).to(model.device)
 
-        _, probs = model.detect_language(mel)
-        print(f"Detected language: {max(probs, key=probs.get)}")
+        # _, probs = model.detect_language(mel)
+        # print(f"Detected language: {max(probs, key=probs.get)}")
 
-        options = whisper.DecodingOptions(fp16=False)
-        result = whisper.decode(model, mel, options)
+        # options = whisper.DecodingOptions(fp16=False)
+        # result = whisper.decode(model, mel, options)
 
         print("Audio duration:", duration)
 
+        coupures = []
+
+        for i in range(int(duration / 92) + 1):
+            coupures.append(
+                [max(i*92 - 5, 0), min((i+1) * 92, int(duration))])
+
+        print("Coupures:", coupures)
+
+        all_text = ""
+
+        print("Audio:", audio)
+
+        for i in range(len(coupures)):
+            # print("Coupure:", coupures[i])
+
+            cut_audio = audio[coupures[i][0] * 1000: coupures[i][1] * 1000]
+
+            # Convert audio to mono
+            cut_audio2 = whisper.pad_or_trim(cut_audio)
+
+            # print("Cut audio:", cut_audio2)
+
+            mel = whisper.log_mel_spectrogram(
+                cut_audio2).to(model.device)
+            _, probs = model.detect_language(mel)
+            # print(f"Detected language: {max(probs, key=probs.get)}")
+
+            options = whisper.DecodingOptions(fp16=False)
+            result = whisper.decode(model, mel, options)
+
+            print(result.text)
+
+            all_text += result.text
+
+        print("All text:", all_text)
+
         file_info = {
             'file_path': file_path,
-            'result_text': result.text
+            'result_text': all_text
         }
 
     #     return f"File has been uploaded. Path: {file_path}, {result.text}"
@@ -82,8 +112,14 @@ def summarize():
     form = UploadFileForm()
     if request.method == "POST":
         result_text = request.form.get("result_text")
-        num_sentences = int(request.form.get("num_sentences"))
-        language = request.form.get("language")
+        if request.form.get("num_sentences") is None:
+            num_sentences = 2
+        else:
+            num_sentences = int(request.form.get("num_sentences"))
+        if request.form.get("language") is None:
+            language = "english"
+        else:
+            language = request.form.get("language")
 
         # Perform the summarization based on the provided values
         summary = summarize(result_text, language,

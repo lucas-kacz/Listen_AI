@@ -109,7 +109,10 @@
         <h2>File Information:</h2>
         <br>
         <p>File has been uploaded.</p><p>Path: {{ file_info.file_path }}</p><p>Result Text: {{ file_info.result_text }}</p>
-        <button><a href="/summarize?result_text={{ file_info.result_text }}">Summarize</a></button>
+        <form method="POST" action="/summarize">
+            <input type="hidden" name="result_text" value="{{ file_info.result_text }}">
+            <button type="submit">Summarize</button>
+        </form>
     {% endif %}
 
 </body>

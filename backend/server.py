@@ -1,8 +1,11 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 
-# Forms
+#CORS
+from flask_cors import CORS
+
+#Forms
 from flask_wtf import FlaskForm
-# Form validation and rendering library
+#Form validation and rendering library
 from wtforms import FileField, SubmitField
 from wtforms.validators import InputRequired
 from werkzeug.utils import secure_filename
@@ -13,16 +16,16 @@ from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
 import nltk
-from flask import request
 
 app = Flask(__name__)
+CORS(app) #We enable CORS for all routes
+
 app.config['SECRET_KEY'] = 'passwordkey'
 app.config['UPLOAD_FOLDER'] = 'static/files'
 
 model = whisper.load_model("base")
 
 nltk.download('punkt')
-
 
 class UploadFileForm(FlaskForm):
     file = FileField("Field", validators=[InputRequired()])
@@ -33,19 +36,16 @@ class UploadFileForm(FlaskForm):
 def hello_world():
     return "<p>Hello, World!</p>"
 
-# Upload files function
-
-
+#Upload files function
 @app.route('/home', methods=['GET', 'POST'])
 def home():
     form = UploadFileForm()
     file_info = None
-
+    
     if form.validate_on_submit():
-        file = form.file.data  # We retrieve the file
-        file_path = os.path.join(os.path.abspath(os.path.dirname(
-            __file__)), app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-        file.save(file_path)  # Then we save the file
+        file = form.file.data #We retrieve the file
+        file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
+        file.save(file_path) #Then we save the file
 
         audio = whisper.load_audio(file_path)
         # audio = whisper.pad_or_trim(audio)
@@ -102,9 +102,8 @@ def home():
             'result_text': all_text
         }
 
-    #     return f"File has been uploaded. Path: {file_path}, {result.text}"
-    # return render_template('index.html', form=form)
-    return render_template('index.html', form=form, file_info=file_info)
+    # return render_template('index.html', form=form, file_info=file_info)
+    return file_info['result_text']
 
 
 @app.route("/summarize", methods=["GET", "POST"])
@@ -121,19 +120,30 @@ def summarize():
         else:
             language = request.form.get("language")
 
-        # Perform the summarization based on the provided values
-        summary = summarize(result_text, language,
-                            sentences_count=num_sentences)
+            
+@app.route("/transcribe", methods=['POST'])
+def transcribe():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
 
-        return render_template("summarize.html", form=form, result_text=result_text, summary=summary)
-    else:
-        # get the result text from the URL parameter
-        result_text = request.args.get("result_text")
-        # summarize the text
-        summary = summarize(result_text, sentences_count=1)
-        # return the summary
-        return render_template("summarize.html", form=form, result_text=result_text, summary=summary)
+    uploaded_file = request.files['file']
+    if uploaded_file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
 
+    saved_file_path = save_uploaded_file(uploaded_file)
+
+    return jsonify({'message': 'File uploaded successfully', 'file_path': saved_file_path}), 200
+
+def save_uploaded_file(file):
+    target_directory = './static/files'
+
+    if not os.path.exists(target_directory):
+        os.makedirs(target_directory)
+
+    file_path = os.path.join(target_directory, file.filename)
+    file.save(file_path)
+
+    return file_path
 
 @app.route("/transcript")
 def transcript():

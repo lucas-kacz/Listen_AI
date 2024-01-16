@@ -16,6 +16,7 @@ from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
 import nltk
+import json
 
 app = Flask(__name__)
 CORS(app)  # We enable CORS for all routes
@@ -107,7 +108,7 @@ def home():
             'result_text': all_text
         }
     # return render_template('index.html', form=form, file_info=file_info)
-    return file_info['result_text']
+    return json.dumps({'result_text': file_info['result_text']})
 
 
 @app.route("/summarize", methods=["GET", "POST"])
@@ -151,28 +152,58 @@ def save_uploaded_file(file):
     return file_path
 
 
-@app.route("/transcript")
+@app.route("/transcript", methods=['POST'])
 def transcript():
-    _, probs = model.detect_language(mel)
-    print(f"Detected language: {max(probs, key=probs.get)}")
 
-    options = whisper.DecodingOptions(fp16=False)
-    result = whisper.decode(model, mel, options)
+    form = UploadFileForm()
+    result_text = "No input data"
 
-    print("Audio duration:", duration)
+    file = form.file.data  # We retrieve the file
+    file_path = os.path.join(os.path.abspath(os.path.dirname(
+        __file__)), app.config['UPLOAD_FOLDER'], secure_filename(file))
 
-    return result.text
+    print(file_path)
+
+    audio = whisper.load_audio(file_path)
+
+    duration = len(audio)/1000
+
+    coupures = []
+
+    for i in range(int(duration/121)+1):
+        coupures.append([max(i*121-5, 0), min((i+1)*121, int(duration))])
+
+    result_text = ""
+
+    for i in range(len(coupures)):
+        cut_audio = audio[coupures[i][0]*1000: coupures[i][1]*1000]
+
+        cut_audio2 = whisper.pad_or_trim(cut_audio)
+
+        mel = whisper.log_mel_spectrogram(cut_audio2).to(model.device)
+        _, probs = model.detect_language(mel)
+
+        options = whisper.DecodingOptions(fp16=False)
+        result = whisper.decode(model, mel, options)
+
+        print(f"{100*i/len(coupures):.2f}% : {result.text}")
+
+        result_text += result.text
+
+    return json.dumps({'result_text': result_text})
 
 
-@app.route("/summary")
+@app.route("/summary", methods=['POST'])
 def summary():
-    _, probs = model.detect_language(mel)
-    print(f"Detected language: {max(probs, key=probs.get)}")
 
-    options = whisper.DecodingOptions(fp16=False)
-    result = whisper.decode(model, mel, options)
+    form = UploadFileForm()
+    summarized_text = "No input data"
 
-    return summarize(result.text, sentences_count=1)
+    text = form.file.data
+
+    summarized_text = summarize(text, sentences_count=1)
+
+    return json.dumps({'summary': str(summarized_text)})
 
 
 def summarize(text, language="english", sentences_count=5):

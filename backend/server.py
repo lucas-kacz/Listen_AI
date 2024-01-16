@@ -63,9 +63,9 @@ def home():
 
         coupures = []
 
-        for i in range(int(duration / 92) + 1):
+        for i in range(int(duration / 144) + 1):
             coupures.append(
-                [max(i*92 - 5, 0), min((i+1) * 92, int(duration))])
+                [max(i*144 - 5, 0), min((i+1) * 144, int(duration))])
 
         print("Coupures:", coupures)
 
@@ -91,7 +91,7 @@ def home():
             options = whisper.DecodingOptions(fp16=False)
             result = whisper.decode(model, mel, options)
 
-            print(result.text)
+            print(f"{i/len(coupures):.2f}% : {result.text}")
 
             all_text += result.text
 

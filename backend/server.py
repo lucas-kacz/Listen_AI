@@ -24,7 +24,7 @@ CORS(app)  # We enable CORS for all routes
 app.config['SECRET_KEY'] = 'passwordkey'
 app.config['UPLOAD_FOLDER'] = 'static/files'
 
-model = whisper.load_model("base")
+model = whisper.load_model("small", device="cpu")
 
 nltk.download('punkt')
 
@@ -126,8 +126,8 @@ def summarize():
             language = request.form.get("language")
 
 
-@app.route("/transcribe", methods=['POST'])
-def transcribe():
+@app.route("/upload", methods=['POST'])
+def upload():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 

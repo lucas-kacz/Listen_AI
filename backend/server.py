@@ -18,6 +18,20 @@ from sumy.summarizers.lsa import LsaSummarizer
 import nltk
 import json
 
+# Use a pipeline as a high-level helper
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.summarizers.lsa import LsaSummarizer
+import torch
+
+device = "cpu"  # the device to load the model onto
+
+model_mistral = AutoModelForCausalLM.from_pretrained(
+    "mistralai/Mistral-7B-Instruct-v0.1")
+tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
+
+
 app = Flask(__name__)
 CORS(app)  # We enable CORS for all routes
 
@@ -164,33 +178,52 @@ def transcript():
 
     print(file_path)
 
-    audio = whisper.load_audio(file_path)
+    # if the corresponding text file already exists, we return it
+    text_file_path = os.path.join('./static/texts', os.path.splitext(
+        os.path.basename(file_path))[0]+".txt")
 
-    duration = len(audio)/1000
+    if os.path.exists(text_file_path):
+        with open(text_file_path, 'r') as text_file:
+            result_text = text_file.read()
+        return json.dumps({'result_text': result_text})
 
-    coupures = []
+    else:
 
-    for i in range(int(duration/121)+1):
-        coupures.append([max(i*121-5, 0), min((i+1)*121, int(duration))])
+        audio = whisper.load_audio(file_path)
 
-    result_text = ""
+        duration = len(audio)/1000
 
-    for i in range(len(coupures)):
-        cut_audio = audio[coupures[i][0]*1000: coupures[i][1]*1000]
+        coupures = []
 
-        cut_audio2 = whisper.pad_or_trim(cut_audio)
+        for i in range(int(duration/121)+1):
+            coupures.append([max(i*121-5, 0), min((i+1)*121, int(duration))])
 
-        mel = whisper.log_mel_spectrogram(cut_audio2).to(model.device)
-        _, probs = model.detect_language(mel)
+        result_text = ""
 
-        options = whisper.DecodingOptions(fp16=False)
-        result = whisper.decode(model, mel, options)
+        for i in range(len(coupures)):
+            cut_audio = audio[coupures[i][0]*1000: coupures[i][1]*1000]
 
-        print(f"{100*i/len(coupures):.2f}% : {result.text}")
+            cut_audio2 = whisper.pad_or_trim(cut_audio)
 
-        result_text += result.text
+            mel = whisper.log_mel_spectrogram(cut_audio2).to(model.device)
+            _, probs = model.detect_language(mel)
 
-    return json.dumps({'result_text': result_text})
+            options = whisper.DecodingOptions(fp16=False)
+            result = whisper.decode(model, mel, options)
+
+            print(f"{100*i/len(coupures):.2f}% : {result.text}")
+
+            result_text += result.text
+
+        # Save the result_text in /static/texts/[name of the file].txt
+        text_directory = './static/texts'
+        if not os.path.exists(text_directory):
+            os.makedirs(text_directory)
+
+        with open(text_file_path, 'w') as text_file:
+            text_file.write(result_text)
+
+        return json.dumps({'result_text': result_text})
 
 
 @app.route("/summary", methods=['POST'])
@@ -201,16 +234,31 @@ def summary():
 
     text = form.file.data
 
-    summarized_text = summarize(text, sentences_count=1)
+    summarized_text = summarize_mistral(text, sentences_count=1)
 
     return json.dumps({'summary': str(summarized_text)})
 
+
+# Add missing import statements here
 
 def summarize(text, language="english", sentences_count=5):
     parser = PlaintextParser.from_string(text, Tokenizer(language))
     summarizer = LsaSummarizer()
     summary = summarizer(parser.document, sentences_count)
     return ' '.join([str(sentence) for sentence in summary])
+
+
+def summarize_mistral(text, language="english", sentences_count=5):
+    # Add this line to add a padding token
+    tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+    encodeds = tokenizer.encode_plus(
+        text, return_tensors="pt", max_length=512, truncation=True, pad_to_max_length=True)  # Pad the input tensor to match the expected size
+    model_inputs = encodeds.to(device)
+    model_mistral.to(device)
+    generated_ids = model_mistral.generate(
+        model_inputs["input_ids"], num_beams=5, max_length=1024, early_stopping=True)
+    decoded = tokenizer.batch_decode(generated_ids)
+    return decoded[0]
 
 
 if __name__ == '__main__':

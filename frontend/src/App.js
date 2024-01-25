@@ -3,6 +3,7 @@ import "./App.css";
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
+  const [transcriptLoading, setTranscriptLoading] = useState(-1.0);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -37,6 +38,8 @@ function App() {
 
   const transcriptFile = async () => {
     try {
+      setTranscriptLoading(0.0);
+
       // Use the selectedFile state variable to retrieve the file
       const file = selectedFile.name;
       const formData = new FormData();
@@ -47,13 +50,39 @@ function App() {
         body: formData,
       });
 
-      const data = await response.json();
+      var data = "";
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8"); // Use the appropriate encoding
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          setTranscriptLoading(100.0);
+          console.log("Stream complete");
+          break;
+        }
+
+        // Convert the Uint8Array to a string
+        var chunk = decoder.decode(value);
+
+        // If chunk starts with {"result_text":, then append it to data
+        if (chunk.startsWith('{"result_text":')) {
+          chunk = chunk.substring(17, chunk.length - 2);
+          data = chunk;
+        } else {
+          // Handle each chunk of data, for example, log it to the console
+          console.log(parseFloat(chunk).toFixed(1));
+          setTranscriptLoading(parseFloat(chunk).toFixed(1));
+        }
+      }
 
       // Handle the response from the server
       console.log(data);
 
       document.getElementById("transcript").style.display = "block";
-      document.getElementById("transcript").innerHTML = data.result_text;
+      document.getElementById("transcript").innerHTML = data;
     } catch (error) {
       // Handle any errors
       console.error(error);
@@ -113,12 +142,28 @@ function App() {
         {selectedFile && <p>{selectedFile.name}</p>}
       </div>
       <button onClick={sendFileToBackend}>Send to Backend</button>
-      <button onClick={transcriptFile}>Transcript</button>
+      <button
+        onClick={transcriptFile}
+        style={
+          transcriptLoading >= 0.0 && transcriptLoading < 100.0
+            ? { backgroundColor: "transparent" }
+            : {}
+        }
+      >
+        {transcriptLoading >= 0.0 && transcriptLoading < 100.0 ? (
+          <p>Transcript : {transcriptLoading}%</p>
+        ) : (
+          <p>Transcript</p>
+        )}
+        {transcriptLoading >= 0.0 && transcriptLoading < 100.0 && (
+          <progress value={transcriptLoading} max="100" color="007bff" />
+        )}
+      </button>
       <button onClick={summarizeFile}>Summarize</button>
       <h2>Transcript</h2>
-      <p id="transcript"></p>
+      <p id="transcript" className="paragraph"></p>
       <h2>Summary</h2>
-      <p id="summary"></p>
+      <p id="summary" className="paragraph"></p>
     </div>
   );
 }

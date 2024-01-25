@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Response
 
 # CORS
 from flask_cors import CORS
@@ -18,18 +18,9 @@ from sumy.summarizers.lsa import LsaSummarizer
 import nltk
 import json
 
-# Use a pipeline as a high-level helper
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from sumy.parsers.plaintext import PlaintextParser
-from sumy.nlp.tokenizers import Tokenizer
-from sumy.summarizers.lsa import LsaSummarizer
 import torch
 
-device = "cpu"  # the device to load the model onto
-
-model_mistral = AutoModelForCausalLM.from_pretrained(
-    "mistralai/Mistral-7B-Instruct-v0.1")
-tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
+from transformers import AutoTokenizer, AutoModelWithLMHead
 
 
 app = Flask(__name__)
@@ -41,6 +32,9 @@ app.config['UPLOAD_FOLDER'] = 'static/files'
 model = whisper.load_model("small", device="cpu")
 
 nltk.download('punkt')
+
+tokenizer = AutoTokenizer.from_pretrained('t5-base')
+google_model = AutoModelWithLMHead.from_pretrained('t5-base', return_dict=True)
 
 
 class UploadFileForm(FlaskForm):
@@ -168,7 +162,6 @@ def save_uploaded_file(file):
 
 @app.route("/transcript", methods=['POST'])
 def transcript():
-
     form = UploadFileForm()
     result_text = "No input data"
 
@@ -182,48 +175,64 @@ def transcript():
     text_file_path = os.path.join('./static/texts', os.path.splitext(
         os.path.basename(file_path))[0]+".txt")
 
-    if os.path.exists(text_file_path):
-        with open(text_file_path, 'r') as text_file:
-            result_text = text_file.read()
-        return json.dumps({'result_text': result_text})
+    def generate():
+        with app.test_request_context():
+            if os.path.exists(text_file_path):
+                with open(text_file_path, 'r') as text_file:
+                    result_text = text_file.read()
+                yield json.dumps({'result_text': result_text})
 
-    else:
+            else:
 
-        audio = whisper.load_audio(file_path)
+                audio = whisper.load_audio(file_path)
 
-        duration = len(audio)/1000
+                duration = len(audio)/1000
 
-        coupures = []
+                coupures = []
 
-        for i in range(int(duration/121)+1):
-            coupures.append([max(i*121-5, 0), min((i+1)*121, int(duration))])
+                for i in range(int(duration/121)+1):
+                    coupures.append(
+                        [max(i*121-10, 0), min((i+1)*121, int(duration))])
 
-        result_text = ""
+                result_text = ""
 
-        for i in range(len(coupures)):
-            cut_audio = audio[coupures[i][0]*1000: coupures[i][1]*1000]
+                for i in range(len(coupures)):
+                    cut_audio = audio[coupures[i][0]*1000: coupures[i][1]*1000]
 
-            cut_audio2 = whisper.pad_or_trim(cut_audio)
+                    cut_audio2 = whisper.pad_or_trim(cut_audio)
 
-            mel = whisper.log_mel_spectrogram(cut_audio2).to(model.device)
-            _, probs = model.detect_language(mel)
+                    mel = whisper.log_mel_spectrogram(
+                        cut_audio2).to(model.device)
+                    _, probs = model.detect_language(mel)
 
-            options = whisper.DecodingOptions(fp16=False)
-            result = whisper.decode(model, mel, options)
+                    options = whisper.DecodingOptions(fp16=False)
+                    result = whisper.decode(model, mel, options)
 
-            print(f"{100*i/len(coupures):.2f}% : {result.text}")
+                    print(f"{100*i/len(coupures):.2f}% : {result.text}")
 
-            result_text += result.text
+                    # send the percentage of the progress to the frontend without stopping the actual process
+                    yield str(100*i/len(coupures)) + "\n"
 
-        # Save the result_text in /static/texts/[name of the file].txt
-        text_directory = './static/texts'
-        if not os.path.exists(text_directory):
-            os.makedirs(text_directory)
+                    result_text += result.text
 
-        with open(text_file_path, 'w') as text_file:
-            text_file.write(result_text)
+                print("Result text before:", result_text)
 
-        return json.dumps({'result_text': result_text})
+                # remove repeated groups of words (e.g. "I mean, I mean, I mean, ..." -> "I mean, ...")
+                # result_text = ' '.join(
+                #     [i[0] for i in nltk.FreqDist(result_text.split()).most_common(100)])
+                # print("Result text after:", result_text)
+
+                # Save the result_text in /static/texts/[name of the file].txt
+                text_directory = './static/texts'
+                if not os.path.exists(text_directory):
+                    os.makedirs(text_directory)
+
+                with open(text_file_path, 'w') as text_file:
+                    text_file.write(result_text)
+
+                yield json.dumps({'result_text': result_text})
+
+    return Response(generate(), mimetype='text/event-stream')
 
 
 @app.route("/summary", methods=['POST'])
@@ -234,7 +243,7 @@ def summary():
 
     text = form.file.data
 
-    summarized_text = summarize_mistral(text, sentences_count=1)
+    summarized_text = summarize_google_t5(text, sentences_count=4)
 
     return json.dumps({'summary': str(summarized_text)})
 
@@ -248,17 +257,17 @@ def summarize(text, language="english", sentences_count=5):
     return ' '.join([str(sentence) for sentence in summary])
 
 
-def summarize_mistral(text, language="english", sentences_count=5):
-    # Add this line to add a padding token
-    tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-    encodeds = tokenizer.encode_plus(
-        text, return_tensors="pt", max_length=512, truncation=True, pad_to_max_length=True)  # Pad the input tensor to match the expected size
-    model_inputs = encodeds.to(device)
-    model_mistral.to(device)
-    generated_ids = model_mistral.generate(
-        model_inputs["input_ids"], num_beams=5, max_length=1024, early_stopping=True)
-    decoded = tokenizer.batch_decode(generated_ids)
-    return decoded[0]
+def summarize_google_t5(text, sentences_count=5):
+    inputs = tokenizer.encode("summarize: " + text,
+                              return_tensors='pt',
+                              max_length=512,
+                              truncation=True)
+    summary_ids = google_model.generate(
+        inputs, max_length=200, min_length=80, length_penalty=5., num_beams=2)
+
+    summary = tokenizer.decode(summary_ids[0])
+
+    return summary
 
 
 if __name__ == '__main__':

@@ -5,6 +5,9 @@ function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [transcriptLoading, setTranscriptLoading] = useState(-1.0);
 
+  const backend_url = "http://localhost:5000";
+  const backend_url2 = "https";
+
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     setSelectedFile(file);
@@ -22,7 +25,7 @@ function App() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://localhost:5000/upload", {
+      const response = await fetch(backend_url + "/upload", {
         method: "POST",
         body: formData,
       });
@@ -45,7 +48,7 @@ function App() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://localhost:5000/transcript", {
+      const response = await fetch(backend_url + "/transcript", {
         method: "POST",
         body: formData,
       });
@@ -107,7 +110,7 @@ function App() {
       const formData = new FormData();
       formData.append("file", text);
 
-      const response = await fetch("http://localhost:5000/summary", {
+      const response = await fetch(backend_url + "/summary", {
         method: "POST",
         body: formData,
       });

@@ -19,8 +19,6 @@ from sumy.summarizers.lsa import LsaSummarizer
 import nltk
 import json
 
-import torch
-
 from transformers import AutoTokenizer, AutoModelWithLMHead
 
 

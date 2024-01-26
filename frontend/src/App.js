@@ -82,7 +82,7 @@ function App() {
         // If chunk has {"result_text": in it, then append it to data
         if (chunk.includes('{"result_text":')) {
           chunk = chunk.split('{"result_text":')[1];
-          chunk = chunk.substring(0, chunk.length - 2);
+          chunk = chunk.substring(1, chunk.length - 2);
           data = chunk;
         } else {
           console.log(parseFloat(chunk).toFixed(1));

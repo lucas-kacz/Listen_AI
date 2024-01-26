@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import "./App.css";
 
 function App() {
+  const [title, setTitle] = useState("Upload a file to transcribe");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [fileUploaded, setFileUploaded] = useState(false);
   const [transcriptLoading, setTranscriptLoading] = useState(-1.0);
 
-  const backend_url2 = "http://localhost:5000";
+  // const backend_url = "http://localhost:5000";
   const backend_url = "http://217.160.142.195:25000";
 
   const handleFileUpload = (event) => {
@@ -16,6 +18,7 @@ function App() {
     // indicating that the file has been uploaded successfully
 
     console.log("File uploaded:", file.name);
+    setTitle(file.name);
   };
 
   const sendFileToBackend = async () => {
@@ -33,10 +36,16 @@ function App() {
       const data = await response.json();
       // Handle the response from the server
       console.log(data);
+      setFileUploaded(true);
     } catch (error) {
       // Handle any errors
       console.error(error);
     }
+  };
+
+  const uploadNewFile = () => {
+    setSelectedFile(null);
+    setFileUploaded(false);
   };
 
   const transcriptFile = async () => {
@@ -69,10 +78,12 @@ function App() {
 
         // Convert the Uint8Array to a string
         var chunk = decoder.decode(value);
+        console.log(chunk);
 
-        // If chunk starts with {"result_text":, then append it to data
-        if (chunk.startsWith('{"result_text":')) {
-          chunk = chunk.substring(17, chunk.length - 2);
+        // If chunk has {"result_text": in it, then append it to data
+        if (chunk.includes('{"result_text":')) {
+          chunk = chunk.split('{"result_text":')[1];
+          chunk = chunk.substring(0, chunk.length - 2);
           data = chunk;
         } else {
           // Handle each chunk of data, for example, log it to the console
@@ -131,20 +142,31 @@ function App() {
   return (
     <div className="App">
       <h1>
-        Upload a file to transcribe
+        {title}
         <span role="img" aria-label="microphone">
           🎤
         </span>
       </h1>
-      <div
-        className="drop-zone"
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-      >
-        <input type="file" onChange={handleFileUpload} />
-        {selectedFile && <p>{selectedFile.name}</p>}
-      </div>
-      <button onClick={sendFileToBackend}>Send to Backend</button>
+      {fileUploaded === false ? (
+        <>
+          <div
+            className="drop-zone"
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            <input type="file" onChange={handleFileUpload} />
+            {selectedFile && <p>{selectedFile.name}</p>}
+          </div>
+          <button onClick={sendFileToBackend}>Send to Backend</button>
+        </>
+      ) : (
+        <>
+          <p>File uploaded</p>
+          <button onClick={uploadNewFile} className="red-btn">
+            Upload new file
+          </button>
+        </>
+      )}
       <button
         onClick={transcriptFile}
         style={

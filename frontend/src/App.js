@@ -5,8 +5,8 @@ function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [transcriptLoading, setTranscriptLoading] = useState(-1.0);
 
-  const backend_url = "http://localhost:5000";
-  const backend_url2 = "https";
+  const backend_url2 = "http://localhost:5000";
+  const backend_url = "http://217.160.142.195:25000";
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];

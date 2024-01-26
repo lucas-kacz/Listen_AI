@@ -78,7 +78,6 @@ function App() {
 
         // Convert the Uint8Array to a string
         var chunk = decoder.decode(value);
-        console.log(chunk);
 
         // If chunk has {"result_text": in it, then append it to data
         if (chunk.includes('{"result_text":')) {
@@ -86,7 +85,6 @@ function App() {
           chunk = chunk.substring(0, chunk.length - 2);
           data = chunk;
         } else {
-          // Handle each chunk of data, for example, log it to the console
           console.log(parseFloat(chunk).toFixed(1));
           setTranscriptLoading(parseFloat(chunk).toFixed(1));
         }

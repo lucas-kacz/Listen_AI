@@ -104,7 +104,7 @@ def home():
             # print("Cut audio:", cut_audio2)
 
             mel = whisper.log_mel_spectrogram(
-                cut_audio2).to(model.device)
+                cut_audio2, n_mels=80).to(model.device)
             _, probs = model.detect_language(mel)
             # print(f"Detected language: {max(probs, key=probs.get)}")
 

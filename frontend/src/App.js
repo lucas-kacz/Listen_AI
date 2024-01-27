@@ -46,6 +46,8 @@ function App() {
 
   const uploadNewFile = () => {
     setSelectedFile(null);
+    document.getElementById("transcript").innerHTML = "";
+    document.getElementById("summary").innerHTML = "";
     setFileUploaded(false);
   };
 

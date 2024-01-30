@@ -9,7 +9,7 @@ function App() {
 
   // const backend_url = "http://localhost:5000";
   // const backend_url = "http://217.160.142.195:25000";
-  const backend_url = "https://1d25-217-160-142-195.ngrok-free.app";
+  const backend_url = "https://cc08-217-160-142-195.ngrok-free.app/";
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];

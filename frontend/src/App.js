@@ -9,9 +9,7 @@ function App() {
   const [transcriptLoading, setTranscriptLoading] = useState(-1.0);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summarized, setSummarized] = useState(false);
-
-  const backend_url = "http://localhost:5000"; //                               UNCOMMENT THIS LINE IF YOU WANT TO USE THE LOCAL BACKEND
-  // const backend_url = "https://cc08-217-160-142-195.ngrok-free.app/"; //     UNCOMMENT THIS LINE IF YOU WANT TO USE THE DISTANT BACKEND
+  const [backend_url, setBackendUrl] = useState("http://localhost:5000");
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -164,6 +162,14 @@ function App() {
     setSummarized(true);
   };
 
+  const useLocalBackend = () => {
+    setBackendUrl("http://localhost:5000");
+  };
+
+  const useDistantBackend = () => {
+    setBackendUrl("https://cc08-217-160-142-195.ngrok-free.app/");
+  };
+
   return (
     <div className="App">
       <h1>
@@ -172,6 +178,20 @@ function App() {
           🎤
         </span>
       </h1>
+      <p>
+        The backend in use is: <b>{backend_url}</b>
+      </p>
+      <div className="flex-container">
+        {backend_url === "http://localhost:5000" ? (
+          <button className="flex-item" onClick={useDistantBackend}>
+            Use distant backend
+          </button>
+        ) : (
+          <button className="flex-item" onClick={useLocalBackend}>
+            Use local backend
+          </button>
+        )}
+      </div>
       {fileUploaded === false ? (
         <>
           <div

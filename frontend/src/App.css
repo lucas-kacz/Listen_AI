@@ -142,3 +142,40 @@ button:disabled {
   border-color: #6c757d !important;
   cursor: not-allowed;
 }
+
+.flex-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-item {
+  margin: 10px;
+  padding: 0 20px;
+  width: 200px;
+  max-width: 90vw;
+  height: 50px;
+  background-color: var(--dark-color);
+  color: var(--light-color);
+  border: .1em solid #007bff;
+  border-radius: 5px;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  cursor: pointer;
+  vertical-align: middle;
+  position: relative !important;
+}
+
+.flex-item:hover {
+  background-color: var(--grey-color);
+}
+
+p b {
+  user-select: all;
+}
+
+.blue-btn {
+  background-color: #007bff !important;
+  border-color: #007bff !important;
+}

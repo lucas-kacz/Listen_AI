@@ -167,7 +167,7 @@ function App() {
   };
 
   const useDistantBackend = () => {
-    setBackendUrl("https://cc08-217-160-142-195.ngrok-free.app/");
+    setBackendUrl("https://cc08-217-160-142-195.ngrok-free.app");
   };
 
   return (

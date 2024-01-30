@@ -20,6 +20,7 @@ https://flask.palletsprojects.com/en/3.0.x/installation/
 Install required libraries
 
 ```
+pip install -r requirements.txt
 pip install flask
 pip install flask-cors
 ```

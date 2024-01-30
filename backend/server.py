@@ -64,10 +64,12 @@ def save_uploaded_file(file):
 
     # verify if the file is an audio file
     if file.filename.split('.')[-1] != 'mp3':
+        print("File type not supported")
         return jsonify({'error': 'File type not supported'}), 400
 
     # verify if the file is not too big (max 100MB)
     if len(file.read()) > 100000000:
+        print("File too big")
         return jsonify({'error': 'File too big'}), 400
 
     target_directory = './static/files'

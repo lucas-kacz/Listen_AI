@@ -15,6 +15,22 @@ function App() {
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
+
+    // File type verification
+    if (file.type !== "audio/mpeg") {
+      alert("Only MP3 files are allowed.");
+      uploadNewFile();
+      return;
+    }
+
+    // File size verification
+    const maxSize = 100 * 1024 * 1024; // 100 MB
+    if (file.size > maxSize) {
+      alert("File size exceeds the limit of 100 MB.");
+      uploadNewFile();
+      return;
+    }
+
     setSelectedFile(file);
 
     // Optionally, you can display a message to the user

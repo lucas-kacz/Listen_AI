@@ -132,3 +132,13 @@ button:hover {
 input[type="file"] {
   margin-bottom: 10px;
 }
+
+i {
+  margin-left: 4px !important;
+}
+
+button:disabled {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  cursor: not-allowed;
+}

@@ -4,8 +4,11 @@ import "./App.css";
 function App() {
   const [title, setTitle] = useState("Upload a file to transcribe");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [fileUploading, setFileUploading] = useState(false);
   const [fileUploaded, setFileUploaded] = useState(false);
   const [transcriptLoading, setTranscriptLoading] = useState(-1.0);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summarized, setSummarized] = useState(false);
 
   // const backend_url = "http://localhost:5000";
   // const backend_url = "http://217.160.142.195:25000";
@@ -23,6 +26,7 @@ function App() {
   };
 
   const sendFileToBackend = async () => {
+    setFileUploading(true);
     try {
       // Use the selectedFile state variable to retrieve the file
       const file = selectedFile;
@@ -42,6 +46,7 @@ function App() {
       // Handle any errors
       console.error(error);
     }
+    setFileUploading(false);
   };
 
   const uploadNewFile = () => {
@@ -49,6 +54,7 @@ function App() {
     document.getElementById("transcript").innerHTML = "";
     document.getElementById("summary").innerHTML = "";
     setFileUploaded(false);
+    setSummarized(false);
   };
 
   const transcriptFile = async () => {
@@ -116,6 +122,7 @@ function App() {
   };
 
   const summarizeFile = async () => {
+    setSummaryLoading(true);
     try {
       // Use the selectedFile state variable to retrieve the file
       const text = document.getElementById("transcript").innerText;
@@ -138,6 +145,8 @@ function App() {
       // Handle any errors
       console.error(error);
     }
+    setSummaryLoading(false);
+    setSummarized(true);
   };
 
   return (
@@ -158,7 +167,20 @@ function App() {
             <input type="file" onChange={handleFileUpload} />
             {selectedFile && <p>{selectedFile.name}</p>}
           </div>
-          <button onClick={sendFileToBackend}>Send to Backend</button>
+          <button
+            onClick={sendFileToBackend}
+            style={
+              fileUploading === true ? { backgroundColor: "transparent" } : {}
+            }
+          >
+            {fileUploading === true ? (
+              <>
+                Uploading <i className="fa fa-spinner fa-spin"></i>
+              </>
+            ) : (
+              <>Upload</>
+            )}
+          </button>
         </>
       ) : (
         <>
@@ -177,7 +199,10 @@ function App() {
         }
       >
         {transcriptLoading >= 0.0 && transcriptLoading < 100.0 ? (
-          <p>Transcript : {transcriptLoading}%</p>
+          <p>
+            Transcript : {transcriptLoading}%
+            <i className="fa fa-spinner fa-spin"></i>
+          </p>
         ) : (
           <p>Transcript</p>
         )}
@@ -185,7 +210,25 @@ function App() {
           <progress value={transcriptLoading} max="100" color="007bff" />
         )}
       </button>
-      <button onClick={summarizeFile}>Summarize</button>
+      {summarized === false ? (
+        <button
+          onClick={summarizeFile}
+          style={
+            summaryLoading === true ? { backgroundColor: "transparent" } : {}
+          }
+        >
+          {summaryLoading === true ? (
+            <>
+              Summarizing <i className="fa fa-spinner fa-spin"></i>
+            </>
+          ) : (
+            <>Summarize</>
+          )}
+        </button>
+      ) : (
+        <button disabled>Summarized</button>
+      )}
+
       <h2>Transcript</h2>
       <p id="transcript" className="paragraph"></p>
       <h2>Summary</h2>

@@ -10,9 +10,8 @@ function App() {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summarized, setSummarized] = useState(false);
 
-  // const backend_url = "http://localhost:5000";
-  // const backend_url = "http://217.160.142.195:25000";
-  const backend_url = "https://cc08-217-160-142-195.ngrok-free.app/";
+  const backend_url = "http://localhost:5000"; //                               UNCOMMENT THIS LINE IF YOU WANT TO USE THE LOCAL BACKEND
+  // const backend_url = "https://cc08-217-160-142-195.ngrok-free.app/"; //     UNCOMMENT THIS LINE IF YOU WANT TO USE THE DISTANT BACKEND
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];

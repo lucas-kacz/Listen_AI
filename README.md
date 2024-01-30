@@ -9,8 +9,9 @@ The aim of this project is to transcript audio files and to summarize them in th
 The project is a complete web app with a backend written in Flask in order to be able to use the Whisper Library and a React frontend where you can upload, read the transcript of the uploaded audio file and summarize it.
 
 This app automatically detects the language of the audio and transcripts it in the same language.
+This app is hosted on this [website](https://listen-ai.onrender.com/) and you can try to summarize your own audios.
 
-This app is hosted on this [website](https://cc08-217-160-142-195.ngrok-free.app/) and you can try to summarize your own audios.
+The backend is hosted on this [url](https://cc08-217-160-142-195.ngrok-free.app/).
 
 ## Installation 
 
@@ -27,6 +28,3 @@ pip install flask-cors
 
 Install Whisper
 https://github.com/openai/whisper
-
-Install Mistral 7B Model
-```pip3 install git+https://github.com/huggingface/transformers.git@72958fcd3c98a7afdc61f953aa58c544ebda2f79```

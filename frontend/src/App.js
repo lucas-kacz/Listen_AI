@@ -213,6 +213,24 @@ function App() {
     }
   };
 
+  const deleteFile = async (file) => {
+    try {
+      const response = await fetch(
+        backend_url + "/delete/" + file.split(".mp3")[0]
+      );
+
+      const data = await response.json();
+
+      // Handle the response from the server
+      console.log(data);
+
+      getAllLocalFiles();
+    } catch (error) {
+      // Handle any errors
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     getAllLocalFiles();
     // eslint-disable-next-line
@@ -226,8 +244,13 @@ function App() {
           {files.length > 0 &&
             files.map((file, index) => {
               return (
-                <li key={index} onClick={() => openFile(file)}>
-                  {file}
+                <li key={index} title={file} onClick={() => openFile(file)}>
+                  {file.split(".mp3")[0].length < 25
+                    ? file.split(".mp3")[0]
+                    : file.split(".mp3")[0].substring(0, 25) + " [...]"}
+                  <button onClick={() => deleteFile(file)}>
+                    <i className="fa fa-trash-o"></i>
+                  </button>
                 </li>
               );
             })}

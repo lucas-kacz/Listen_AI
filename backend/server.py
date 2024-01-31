@@ -173,6 +173,17 @@ def transcript_file(filename):
     return jsonify({'result_text': result_text})
 
 
+@app.route("/delete/<filename>")
+def delete_file(filename):
+
+    text_file_path = os.path.join('./static/texts', filename+".txt")
+    if os.path.exists(text_file_path):
+        os.remove(text_file_path)
+        return jsonify({'message': 'File deleted successfully'}), 200
+    else:
+        return jsonify({'error': 'File not found'}), 400
+
+
 @app.route("/files")
 def files():
     files = os.listdir('./static/files')

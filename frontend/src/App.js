@@ -126,6 +126,12 @@ function App() {
 
       document.getElementById("transcript").style.display = "block";
       document.getElementById("transcript").innerHTML = data;
+
+      document.getElementById("summary").style.display = "none";
+      document.getElementById("summary").innerHTML = "";
+
+      setSummarized(false);
+      getAllLocalFiles();
     } catch (error) {
       // Handle any errors
       console.error(error);

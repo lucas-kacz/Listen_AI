@@ -9,7 +9,12 @@ function App() {
   const [transcriptLoading, setTranscriptLoading] = useState(-1.0);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summarized, setSummarized] = useState(false);
-  const [backend_url, setBackendUrl] = useState("http://localhost:5000");
+  const [backend_url, setBackendUrl] = useState(
+    process.env.REACT_APP_LOCAL_URL
+  );
+
+  const localUrl = process.env.REACT_APP_LOCAL_URL;
+  const distantUrl = process.env.REACT_APP_DISTANT_URL;
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -163,11 +168,11 @@ function App() {
   };
 
   const useLocalBackend = () => {
-    setBackendUrl("http://localhost:5000");
+    setBackendUrl(localUrl);
   };
 
   const useDistantBackend = () => {
-    setBackendUrl("https://cc08-217-160-142-195.ngrok-free.app");
+    setBackendUrl(distantUrl);
   };
 
   return (

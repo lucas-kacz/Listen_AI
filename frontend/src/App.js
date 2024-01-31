@@ -10,7 +10,7 @@ function App() {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summarized, setSummarized] = useState(false);
   const [backend_url, setBackendUrl] = useState(
-    process.env.REACT_APP_LOCAL_URL
+    process.env.REACT_APP_DISTANT_URL
   );
   const [files, setFiles] = useState([]);
 

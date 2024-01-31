@@ -96,7 +96,7 @@ function App() {
       var data = "";
 
       const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-32"); // Use the appropriate encoding
+      // const decoder = new TextDecoder("utf-16"); // Use the appropriate encoding
 
       while (true) {
         const { done, value } = await reader.read();
@@ -108,7 +108,7 @@ function App() {
         }
 
         // Convert the Uint8Array to a string
-        var chunk = decoder.decode(value);
+        var chunk = value; // decoder.decode(value);
 
         // If chunk has {"result_text": in it, then append it to data
         if (chunk.includes('{"result_text":')) {

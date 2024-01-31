@@ -177,10 +177,15 @@ def transcript_file(filename):
 def delete_file(filename):
 
     text_file_path = os.path.join('./static/texts', filename+".txt")
+    mp3_file_path = os.path.join('./static/files', filename+".mp3")
     if os.path.exists(text_file_path):
         os.remove(text_file_path)
+        if os.path.exists(mp3_file_path):
+            os.remove(mp3_file_path)
         return jsonify({'message': 'File deleted successfully'}), 200
     else:
+        if os.path.exists(mp3_file_path):
+            os.remove(mp3_file_path)
         return jsonify({'error': 'File not found'}), 400
 
 

@@ -158,6 +158,26 @@ def transcript():
     return Response(generate(), mimetype='text/event-stream')
 
 
+@app.route("/transcript/<filename>")
+def transcript_file(filename):
+
+    print(filename)
+
+    text_file_path = os.path.join('./static/texts', filename+".txt")
+    if os.path.exists(text_file_path):
+        with open(text_file_path, 'r') as text_file:
+            result_text = text_file.read()
+    else:
+        result_text = "File not found"
+    return jsonify({'result_text': result_text})
+
+
+@app.route("/files")
+def files():
+    files = os.listdir('./static/files')
+    return jsonify({'files': files})
+
+
 @app.route("/summary", methods=['POST'])
 def summary():
 

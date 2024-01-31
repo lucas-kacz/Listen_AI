@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
-  const [title, setTitle] = useState("Upload a file to transcribe");
+  const [title, setTitle] = useState("ListenAI");
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileUploading, setFileUploading] = useState(false);
   const [fileUploaded, setFileUploaded] = useState(false);
@@ -12,6 +12,7 @@ function App() {
   const [backend_url, setBackendUrl] = useState(
     process.env.REACT_APP_LOCAL_URL
   );
+  const [files, setFiles] = useState([]);
 
   const localUrl = process.env.REACT_APP_LOCAL_URL;
   const distantUrl = process.env.REACT_APP_DISTANT_URL;
@@ -92,7 +93,7 @@ function App() {
       var data = "";
 
       const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8"); // Use the appropriate encoding
+      const decoder = new TextDecoder("utf-32"); // Use the appropriate encoding
 
       while (true) {
         const { done, value } = await reader.read();
@@ -175,104 +176,164 @@ function App() {
     setBackendUrl(distantUrl);
   };
 
+  const getAllLocalFiles = async () => {
+    try {
+      const response = await fetch(backend_url + "/files", {
+        method: "GET",
+      });
+
+      const data = await response.json();
+
+      // Handle the response from the server
+      console.log(data);
+
+      setFiles(data.files);
+    } catch (error) {
+      // Handle any errors
+      console.error(error);
+    }
+  };
+
+  const openFile = async (file) => {
+    try {
+      const response = await fetch(
+        backend_url + "/transcript/" + file.split(".mp3")[0]
+      );
+
+      const data = await response.json();
+
+      // Handle the response from the server
+      console.log(data);
+
+      document.getElementById("transcript").style.display = "block";
+      document.getElementById("transcript").innerHTML = data.result_text;
+    } catch (error) {
+      // Handle any errors
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    getAllLocalFiles();
+    // eslint-disable-next-line
+  }, []);
+
   return (
     <div className="App">
-      <h1>
-        {title}
-        <span role="img" aria-label="microphone">
-          🎤
-        </span>
-      </h1>
-      <p>
-        The backend in use is: <b>{backend_url}</b>
-      </p>
-      <div className="flex-container">
-        {backend_url === "http://localhost:5000" ? (
-          <button className="flex-item" onClick={useDistantBackend}>
-            Use distant backend
-          </button>
-        ) : (
-          <button className="flex-item" onClick={useLocalBackend}>
-            Use local backend
-          </button>
-        )}
+      <div className="side-container">
+        <h2>Available Files</h2>
+        <ul>
+          {files.length > 0 &&
+            files.map((file, index) => {
+              return (
+                <li key={index} onClick={() => openFile(file)}>
+                  {file}
+                </li>
+              );
+            })}
+        </ul>
       </div>
-      {fileUploaded === false ? (
-        <>
-          <div
-            className="drop-zone"
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            <input type="file" onChange={handleFileUpload} />
-            {selectedFile && <p>{selectedFile.name}</p>}
-          </div>
+      <div className="main-container">
+        <h1>
+          {title}
+          <span role="img" aria-label="microphone">
+            🎤
+          </span>
+        </h1>
+        <h2>Transcript</h2>
+        <p id="transcript" className="paragraph"></p>
+        <p className="spacer50"></p>
+        {summarized === false ? (
           <button
-            onClick={sendFileToBackend}
+            onClick={summarizeFile}
             style={
-              fileUploading === true ? { backgroundColor: "transparent" } : {}
+              summaryLoading === true ? { backgroundColor: "transparent" } : {}
             }
           >
-            {fileUploading === true ? (
+            {summaryLoading === true ? (
               <>
-                Uploading <i className="fa fa-spinner fa-spin"></i>
+                Summarizing <i className="fa fa-spinner fa-spin"></i>
               </>
             ) : (
-              <>Upload</>
+              <>Summarize</>
             )}
           </button>
-        </>
-      ) : (
-        <>
-          <p>File uploaded</p>
-          <button onClick={uploadNewFile} className="red-btn">
-            Upload new file
-          </button>
-        </>
-      )}
-      <button
-        onClick={transcriptFile}
-        style={
-          transcriptLoading >= 0.0 && transcriptLoading < 100.0
-            ? { backgroundColor: "transparent" }
-            : {}
-        }
-      >
-        {transcriptLoading >= 0.0 && transcriptLoading < 100.0 ? (
-          <p>
-            Transcript : {transcriptLoading}%
-            <i className="fa fa-spinner fa-spin"></i>
-          </p>
         ) : (
-          <p>Transcript</p>
+          <button disabled>Summarized</button>
         )}
-        {transcriptLoading >= 0.0 && transcriptLoading < 100.0 && (
-          <progress value={transcriptLoading} max="100" color="007bff" />
+        <h2>Summary</h2>
+        <p id="summary" className="paragraph"></p>
+      </div>
+      <div className="upload-container">
+        <h2>Add a new file</h2>
+        <p>
+          The backend in use is: <b>{backend_url}</b>
+        </p>
+        <div className="flex-container">
+          {backend_url === "http://localhost:5000" ? (
+            <button className="flex-item" onClick={useDistantBackend}>
+              Use distant backend
+            </button>
+          ) : (
+            <button className="flex-item" onClick={useLocalBackend}>
+              Use local backend
+            </button>
+          )}
+        </div>
+        {fileUploaded === false ? (
+          <>
+            <div
+              className="drop-zone"
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              <input type="file" onChange={handleFileUpload} />
+              {selectedFile && <p>{selectedFile.name}</p>}
+            </div>
+            <button
+              onClick={sendFileToBackend}
+              style={
+                fileUploading === true ? { backgroundColor: "transparent" } : {}
+              }
+            >
+              {fileUploading === true ? (
+                <>
+                  Uploading <i className="fa fa-spinner fa-spin"></i>
+                </>
+              ) : (
+                <>Upload</>
+              )}
+            </button>
+          </>
+        ) : (
+          <>
+            <p>File uploaded</p>
+            <button onClick={uploadNewFile} className="red-btn">
+              Upload new file
+            </button>
+          </>
         )}
-      </button>
-      {summarized === false ? (
         <button
-          onClick={summarizeFile}
+          onClick={transcriptFile}
           style={
-            summaryLoading === true ? { backgroundColor: "transparent" } : {}
+            transcriptLoading >= 0.0 && transcriptLoading < 100.0
+              ? { backgroundColor: "transparent" }
+              : {}
           }
         >
-          {summaryLoading === true ? (
-            <>
-              Summarizing <i className="fa fa-spinner fa-spin"></i>
-            </>
+          {transcriptLoading >= 0.0 && transcriptLoading < 100.0 ? (
+            <p>
+              Transcript : {transcriptLoading}%
+              <i className="fa fa-spinner fa-spin"></i>
+            </p>
           ) : (
-            <>Summarize</>
+            <p>Transcript</p>
+          )}
+          {transcriptLoading >= 0.0 && transcriptLoading < 100.0 && (
+            <progress value={transcriptLoading} max="100" color="007bff" />
           )}
         </button>
-      ) : (
-        <button disabled>Summarized</button>
-      )}
-
-      <h2>Transcript</h2>
-      <p id="transcript" className="paragraph"></p>
-      <h2>Summary</h2>
-      <p id="summary" className="paragraph"></p>
+      </div>
     </div>
   );
 }

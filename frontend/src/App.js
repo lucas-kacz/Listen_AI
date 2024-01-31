@@ -207,6 +207,8 @@ function App() {
 
       document.getElementById("transcript").style.display = "block";
       document.getElementById("transcript").innerHTML = data.result_text;
+
+      setSummarized(false);
     } catch (error) {
       // Handle any errors
       console.error(error);

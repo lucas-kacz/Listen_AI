@@ -70,7 +70,9 @@ function App() {
 
   const uploadNewFile = () => {
     setSelectedFile(null);
+    document.getElementById("transcript").style.display = "none";
     document.getElementById("transcript").innerHTML = "";
+    document.getElementById("summary").style.display = "none";
     document.getElementById("summary").innerHTML = "";
     setFileUploaded(false);
     setSummarized(false);
@@ -207,6 +209,9 @@ function App() {
 
       document.getElementById("transcript").style.display = "block";
       document.getElementById("transcript").innerHTML = data.result_text;
+
+      document.getElementById("summary").style.display = "none";
+      document.getElementById("summary").innerHTML = "";
 
       setSummarized(false);
     } catch (error) {

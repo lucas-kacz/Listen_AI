@@ -74,6 +74,7 @@ function App() {
     document.getElementById("transcript").innerHTML = "";
     document.getElementById("summary").style.display = "none";
     document.getElementById("summary").innerHTML = "";
+    setTitle("ListenAI");
     setFileUploaded(false);
     setSummarized(false);
   };
@@ -213,6 +214,7 @@ function App() {
       document.getElementById("summary").style.display = "none";
       document.getElementById("summary").innerHTML = "";
 
+      setTitle(file.split(".mp3")[0]);
       setSummarized(false);
     } catch (error) {
       // Handle any errors

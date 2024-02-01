@@ -157,7 +157,9 @@ function App() {
       const formData = new FormData();
       formData.append("file", text);
 
-      const response = await fetch(backend_url + "/summary", {
+      const num_sentences = document.getElementById("num_sentences").value;
+
+      const response = await fetch(backend_url + "/summary/" + num_sentences, {
         method: "POST",
         body: formData,
       });
@@ -281,6 +283,23 @@ function App() {
         <h2>Transcript</h2>
         <p id="transcript" className="paragraph"></p>
         <p className="spacer50"></p>
+        {summarized === false && (
+          <>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              defaultValue="4"
+              className="slider"
+              id="num_sentences"
+              onChange={(e) => {
+                document.getElementById("slider-value").textContent =
+                  e.target.value;
+              }}
+            />
+            <span id="slider-value">4</span>
+          </>
+        )}
         {summarized === false ? (
           <button
             onClick={summarizeFile}

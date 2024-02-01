@@ -4,6 +4,11 @@ from flask import Flask, render_template, request, jsonify, Response
 from flask_wtf import FlaskForm
 from flask_cors import CORS
 
+# Parrot
+from parrot import Parrot
+import torch
+import warnings
+
 # Forms
 from flask_wtf import FlaskForm
 # Form validation and rendering library
@@ -28,6 +33,9 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 app.config['SECRET_KEY'] = 'passwordkey'
 app.config['UPLOAD_FOLDER'] = 'static/files'
+
+warnings.filterwarnings("ignore")
+parrot = Parrot(model_tag="prithivida/parrot_paraphraser_on_T5")
 
 model = whisper.load_model("small", device="cpu")
 
@@ -195,15 +203,18 @@ def files():
     return jsonify({'files': files})
 
 
-@app.route("/summary", methods=['POST'])
-def summary():
+@app.route("/summary/<num_sentences>", methods=['POST'])
+def summary(num_sentences):
 
     form = UploadFileForm()
     summarized_text = "No input data"
 
     text = form.file.data
 
-    summarized_text = summarize_google_t5(text, sentences_count=4)
+    print(num_sentences)
+
+    summarized_text = summarize_google_t5(
+        text, sentences_count=int(num_sentences))
 
     return json.dumps({'summary': str(summarized_text)})
 
@@ -217,15 +228,92 @@ def summarize(text, language="english", sentences_count=5):
     return ' '.join([str(sentence) for sentence in summary])
 
 
-def summarize_google_t5(text, sentences_count=5):
-    inputs = tokenizer.encode("summarize: " + text,
-                              return_tensors='pt',
-                              max_length=512,
-                              truncation=True)
-    summary_ids = google_model.generate(
-        inputs, max_length=200, min_length=80, length_penalty=5., num_beams=2)
+def summarize_google_t5(text, sentences_count):
 
-    summary = tokenizer.decode(summary_ids[0])
+    # split the text into sentences of 512 tokens max
+    split_text = text.split(".")
+
+    # separate the whole text into multiple sentences of 512 tokens max
+    final_split_text = []
+    index = 0
+    while index < len(split_text):
+        temp_sentences = 0
+        temp_height = 0
+        temp_text = ""
+        while True:
+            if index >= len(split_text):
+                final_split_text.append(temp_text)
+                break
+            temp_text += split_text[index] + "."
+            temp_sentences += 1
+            temp_height += len(tokenizer.encode(split_text[index]))
+            if temp_height > 512:
+                final_split_text.append(temp_text)
+                break
+            index += 1
+
+    # remove texts that are in double
+    final_split_text = list(dict.fromkeys(final_split_text))
+
+    print(len(final_split_text))
+    print(final_split_text)
+
+    # summarize each sentence
+    for i in range(len(final_split_text)):
+        print(i)
+        print("summarize: " + str(final_split_text[i]))
+        inputs = tokenizer.encode("summarize: " + str(final_split_text[i]),
+                                  return_tensors='pt',
+                                  max_length=2048,
+                                  truncation=True)
+        summary_ids = google_model.generate(
+            inputs, max_length=2048, length_penalty=0, num_beams=3)  # more num_beams is low, more the summary is accurate but less it is diverse
+
+        final_split_text[i] = tokenizer.decode(summary_ids[0])
+        print("summary: " + str(final_split_text[i]))
+
+    # concatenate the sentences
+    concatenated_summary = ""
+    for i in range(len(final_split_text)):
+        final_split_text[i] = final_split_text[i].replace("<pad>", "")
+        final_split_text[i] = final_split_text[i].replace("<unk>", "")
+        final_split_text[i] = final_split_text[i].replace("<extra_id_0>", "")
+        final_split_text[i] = final_split_text[i].replace("<extra_id_1>", "")
+        final_split_text[i] = final_split_text[i].replace("<sep>", "")
+        final_split_text[i] = final_split_text[i].replace("<s>", "")
+        final_split_text[i] = final_split_text[i].replace("</s>", "")
+        concatenated_summary += final_split_text[i]
+
+    # # summarize the summary
+    # inputs = tokenizer.encode("summarize: " + str(concatenated_summary),
+    #                           return_tensors='pt',
+    #                           max_length=2048,
+    #                           truncation=True)
+    # summary_ids = google_model.generate(
+    #     inputs, max_length=2048, length_penalty=0, num_beams=3)  # more num_beams is low, more the summary is accurate but less it is diverse
+
+    # summary = tokenizer.decode(summary_ids[0])
+
+    print("concatenated_summary: " + str(concatenated_summary))
+
+    # if the concatenated summary is too long (more than 500 tokens to take a margin), we split it into multiple summaries
+
+    # if len(concatenated_summary) > 1000:
+    #     number_of_summaries = int(
+    #         len(concatenated_summary)/1000) + 1
+    #     print("number_of_summaries: " + str(number_of_summaries))
+    #     summaries = []
+    #     for i in range(number_of_summaries):
+    #         parroted_summary = parrot.augment(input_phrase=str(concatenated_summary[i*1000:min((i+1)*1000, len(
+    #             concatenated_summary))]), adequacy_threshold=0.61, fluency_threshold=0.80, do_diverse=True, use_gpu=False, max_return_phrases=1, max_length=512)
+    #         summaries.append(parroted_summary[0][0])
+
+    #     summary = ' '.join([str(sentence) for sentence in summaries])
+
+    # else:
+
+    summary = parrot.augment(input_phrase=str(concatenated_summary), adequacy_threshold=0.61, fluency_threshold=0.80, do_diverse=True,
+                             use_gpu=False, max_return_phrases=sentences_count, max_length=512)[0][0]
 
     return summary
 

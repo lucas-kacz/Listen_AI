@@ -28,3 +28,11 @@ pip install flask-cors
 
 Install Whisper
 https://github.com/openai/whisper
+
+## Examples
+
+![Capture d’écran 2024-02-02 à 21 56 32](https://github.com/lucas-kacz/Listen_AI/assets/74963340/db483e1b-a347-4f23-bb9f-398544f59723)
+
+![Capture d’écran 2024-02-02 à 22 55 08](https://github.com/lucas-kacz/Listen_AI/assets/74963340/a52c3394-90bc-4a71-9e5c-1b600007047c)
+
+![Capture d’écran 2024-02-02 à 19 58 05](https://github.com/lucas-kacz/Listen_AI/assets/74963340/c7fb6e86-1c6b-407a-8768-df769816b07a)

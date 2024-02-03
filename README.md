@@ -31,6 +31,8 @@ https://github.com/openai/whisper
 
 ## Examples
 
+![Capture d’écran 2024-02-03 à 12 50 38](https://github.com/lucas-kacz/Listen_AI/assets/74963340/bea5c007-abb6-4e38-a068-bcc5aa6deeb7)
+
 ![Capture d’écran 2024-02-03 à 12 39 15](https://github.com/lucas-kacz/Listen_AI/assets/74963340/009bcefd-634d-4243-a3e9-049287a542a0)
 
 ![Capture d’écran 2024-02-02 à 21 56 32](https://github.com/lucas-kacz/Listen_AI/assets/74963340/db483e1b-a347-4f23-bb9f-398544f59723)

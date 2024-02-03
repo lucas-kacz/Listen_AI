@@ -8,7 +8,7 @@
 .App {
   display: flex;
   height: fit-content;
-  min-height: 100vh;
+  min-height: calc(100vh + 200px);
   position: relative;
   background-color: var(--dark-color);
 }
@@ -284,7 +284,7 @@ p b {
 
 .footer {
   text-align: center;
-  background-color: var(--dark-color);
+  background-color: transparent;
   padding: 0;
   position: absolute;
   bottom: 0;

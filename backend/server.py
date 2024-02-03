@@ -123,7 +123,7 @@ def transcript():
 
                 for i in range(int(duration/121)+1):
                     coupures.append(
-                        [max(i*121-10, 0), min((i+1)*121, int(duration))])
+                        [max(i*121-3, 0), min((i+1)*121, int(duration))])
 
                 result_text = ""
 
@@ -246,7 +246,7 @@ def summarize_google_t5(text, sentences_count):
             temp_text += split_text[index] + "."
             temp_sentences += 1
             temp_height += len(tokenizer.encode(split_text[index]))
-            if temp_height > 512:
+            if temp_height > max(1024, len(text)/sentences_count/2) or temp_sentences > sentences_count:
                 final_split_text.append(temp_text)
                 break
             index += 1
@@ -297,6 +297,8 @@ def summarize_google_t5(text, sentences_count):
 
     concatenated_summary = concatenated_summary.replace(
         " cnn.com's tom charity", "")
+    concatenated_summary = concatenated_summary.replace(
+        "cnn.com's ireport.com.", "")
 
     # if the concatenated summary is too long (more than 500 tokens to take a margin), we split it into multiple summaries
 
@@ -316,6 +318,8 @@ def summarize_google_t5(text, sentences_count):
 
     # summary = parrot.augment(input_phrase=str(concatenated_summary), adequacy_threshold=0.61, fluency_threshold=0.80, do_diverse=True,
     #                          use_gpu=False, max_return_phrases=sentences_count, max_length=512)[0][0]
+
+    # if the concatenated summary is too long (more than 512 tokens), we split it into multiple summaries
 
     return str(concatenated_summary)
 

@@ -207,6 +207,8 @@ function App() {
 
   const openFile = async (file) => {
     try {
+      setTitle(file.split(".mp3")[0]);
+
       const response = await fetch(
         backend_url + "/transcript/" + file.split(".mp3")[0]
       );
@@ -222,7 +224,6 @@ function App() {
       document.getElementById("summary").style.display = "none";
       document.getElementById("summary").innerHTML = "";
 
-      setTitle(file.split(".mp3")[0]);
       setSummarized(false);
     } catch (error) {
       // Handle any errors
@@ -280,49 +281,63 @@ function App() {
             🎤
           </span>
         </h1>
-        <h2>Transcript</h2>
-        <p id="transcript" className="paragraph"></p>
-        <p className="spacer50"></p>
-        {summarized === false && (
+        {title === "ListenAI" && (
+          <p>
+            Please select a file on the left or upload a new one on the right to
+            start.
+          </p>
+        )}
+        {title !== "ListenAI" && (
           <>
-            <input
-              type="range"
-              min="1"
-              max="10"
-              defaultValue="4"
-              className="slider"
-              id="num_sentences"
-              onChange={(e) => {
-                document.getElementById("slider-value").textContent =
-                  e.target.value;
-              }}
-            />
-            <span id="slider-value">4</span>
+            <h2>Transcript</h2>
+            <p id="transcript" className="paragraph"></p>
+            <p className="spacer50"></p>
+            {summarized === false && (
+              <>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  defaultValue="4"
+                  className="slider"
+                  id="num_sentences"
+                  onChange={(e) => {
+                    document.getElementById("slider-value").textContent =
+                      e.target.value;
+                  }}
+                />
+                <span id="slider-value">4</span>
+              </>
+            )}
+            {summarized === false ? (
+              <button
+                onClick={summarizeFile}
+                style={
+                  summaryLoading === true
+                    ? { backgroundColor: "transparent" }
+                    : {}
+                }
+              >
+                {summaryLoading === true ? (
+                  <>
+                    Summarizing <i className="fa fa-spinner fa-spin"></i>
+                  </>
+                ) : (
+                  <>Summarize</>
+                )}
+              </button>
+            ) : (
+              <button disabled>Summarized</button>
+            )}
+            <h2>Summary</h2>
+            <p id="summary" className="paragraph"></p>
           </>
         )}
-        {summarized === false ? (
-          <button
-            onClick={summarizeFile}
-            style={
-              summaryLoading === true ? { backgroundColor: "transparent" } : {}
-            }
-          >
-            {summaryLoading === true ? (
-              <>
-                Summarizing <i className="fa fa-spinner fa-spin"></i>
-              </>
-            ) : (
-              <>Summarize</>
-            )}
-          </button>
-        ) : (
-          <button disabled>Summarized</button>
-        )}
-        <h2>Summary</h2>
-        <p id="summary" className="paragraph"></p>
       </div>
       <div className="upload-container">
         <h2>Add a new file</h2>
+	<h3>Accepted format: MP3</h3>
+	<h3>Maximum file size! 100MB</h3>
         <p>
           The backend in use is: <b>{backend_url}</b>
         </p>
@@ -391,8 +406,12 @@ function App() {
           )}
         </button>
       </div>
+      <div className="footer">
+        <p>Made with ♥ by Lucas KACZMARSKI & Sunil GOULAMHOUSSEN</p>
+      </div>
     </div>
   );
 }
 
 export default App;
+

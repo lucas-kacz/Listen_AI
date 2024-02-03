@@ -4,10 +4,9 @@ from flask import Flask, render_template, request, jsonify, Response
 from flask_wtf import FlaskForm
 from flask_cors import CORS
 
-# Parrot
-from parrot import Parrot
-import torch
-import warnings
+# # Parrot
+# from parrot import Parrot
+# import warnings
 
 # Forms
 from flask_wtf import FlaskForm
@@ -34,8 +33,8 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['SECRET_KEY'] = 'passwordkey'
 app.config['UPLOAD_FOLDER'] = 'static/files'
 
-warnings.filterwarnings("ignore")
-parrot = Parrot(model_tag="prithivida/parrot_paraphraser_on_T5")
+# warnings.filterwarnings("ignore")
+# parrot = Parrot(model_tag="prithivida/parrot_paraphraser_on_T5")
 
 model = whisper.load_model("small", device="cpu")
 
@@ -296,6 +295,9 @@ def summarize_google_t5(text, sentences_count):
 
     print("concatenated_summary: " + str(concatenated_summary))
 
+    concatenated_summary = concatenated_summary.replace(
+        " cnn.com's tom charity", "")
+
     # if the concatenated summary is too long (more than 500 tokens to take a margin), we split it into multiple summaries
 
     # if len(concatenated_summary) > 1000:
@@ -312,11 +314,12 @@ def summarize_google_t5(text, sentences_count):
 
     # else:
 
-    summary = parrot.augment(input_phrase=str(concatenated_summary), adequacy_threshold=0.61, fluency_threshold=0.80, do_diverse=True,
-                             use_gpu=False, max_return_phrases=sentences_count, max_length=512)[0][0]
+    # summary = parrot.augment(input_phrase=str(concatenated_summary), adequacy_threshold=0.61, fluency_threshold=0.80, do_diverse=True,
+    #                          use_gpu=False, max_return_phrases=sentences_count, max_length=512)[0][0]
 
-    return summary
+    return str(concatenated_summary)
 
 
 if __name__ == '__main__':
     app.run(debug=True)
+

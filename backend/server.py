@@ -40,8 +40,8 @@ model = whisper.load_model("small", device="cpu")
 
 nltk.download('punkt')
 
-tokenizer = AutoTokenizer.from_pretrained('t5-base')
-google_model = AutoModelWithLMHead.from_pretrained('t5-base', return_dict=True)
+tokenizer = AutoTokenizer.from_pretrained('t5-large')
+google_model = AutoModelWithLMHead.from_pretrained('t5-large', return_dict=True)
 
 
 class UploadFileForm(FlaskForm):
@@ -211,9 +211,14 @@ def summary(num_sentences):
     text = form.file.data
 
     print(num_sentences)
+    
+    first_summary = summarize(text, sentences_count=int(num_sentences)*3)
+    
+    print("first summary: ", first_summary)
 
-    summarized_text = summarize_google_t5(
-        text, sentences_count=int(num_sentences))
+    second_summary = summarize_google_t5(first_summary, sentences_count=int(num_sentences))
+    
+    summarized_text = summarize(second_summary, sentences_count=num_sentences)
 
     return json.dumps({'summary': str(summarized_text)})
 
